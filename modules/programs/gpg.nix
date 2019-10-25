@@ -30,6 +30,13 @@ in {
         <link xlink:href="https://gnupg.org/documentation/manpage.html"/>.
       '';
     };
+
+    homedir = mkOption {
+      type = types.str;
+      example = literalExample "${config.xdg.dataHome}/gnupg";
+      default = ".gnupg";
+      description = "Directory to store keychains and configuration.";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -55,7 +62,10 @@ in {
     };
 
     home.packages = [ pkgs.gnupg ];
+    home.sessionVariables = {
+      GNUPGHOME = cfg.homedir;
+    };
 
-    home.file.".gnupg/gpg.conf".text = cfgText;
+    home.file."${cfg.homedir}/gpg.conf".text = cfgText;
   };
 }

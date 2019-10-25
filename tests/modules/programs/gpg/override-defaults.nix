@@ -12,6 +12,8 @@ with lib;
         s2k-cipher-algo = "AES128";
         throw-keyids = true;
       };
+
+      homedir = "bar/foopg";
     };
 
     nixpkgs.overlays = [
@@ -21,8 +23,8 @@ with lib;
     ];
 
     nmt.script = ''
-      assertFileExists home-files/.gnupg/gpg.conf
-      assertFileContent home-files/.gnupg/gpg.conf ${./override-defaults-expected.conf}
+      assertFileExists home-files/bar/foopg/gpg.conf
+      assertFileContent home-files/bar/foopg/gpg.conf ${./override-defaults-expected.conf}
     '';
   };
 }

@@ -134,7 +134,7 @@ in
 
   config = mkIf cfg.enable (mkMerge [
     {
-      home.file.".gnupg/gpg-agent.conf".text = concatStringsSep "\n" (
+      home.file."${config.programs.gpg.homedir}/gpg-agent.conf".text = concatStringsSep "\n" (
         optional (cfg.enableSshSupport) "enable-ssh-support"
         ++
         optional (!cfg.grabKeyboardAndMouse) "no-grab"
@@ -167,7 +167,7 @@ in
 
     (mkIf (cfg.sshKeys != null) {
       # Trailing newlines are important
-      home.file.".gnupg/sshcontrol".text = concatMapStrings (s: "${s}\n") cfg.sshKeys;
+      home.file."${config.programs.gpg.homedir}/sshcontrol".text = concatMapStrings (s: "${s}\n") cfg.sshKeys;
     })
 
     # The systemd units below are direct translations of the
