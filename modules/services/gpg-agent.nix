@@ -6,6 +6,13 @@ let
 
   cfg = config.services.gpg-agent;
 
+  homedir = config.programs.gpg.homedir;
+
+  gpgconf = dir: let
+    f = pkgs.runCommand dir { GNUPGHOME="${homedir}"; }
+      "${pkgs.gnupg}/bin/gpgconf --list-dirs ${dir} > $out";
+    in "${builtins.readFile f}";
+
   gpgInitStr = ''
     GPG_TTY="$(tty)"
     export GPG_TTY
@@ -134,7 +141,7 @@ in
 
   config = mkIf cfg.enable (mkMerge [
     {
-      home.file."${config.programs.gpg.homedir}/gpg-agent.conf".text = concatStringsSep "\n" (
+      home.file."${homedir}/gpg-agent.conf".text = concatStringsSep "\n" (
         optional (cfg.enableSshSupport) "enable-ssh-support"
         ++
         optional (!cfg.grabKeyboardAndMouse) "no-grab"
@@ -158,7 +165,7 @@ in
 
       home.sessionVariables =
         optionalAttrs cfg.enableSshSupport {
-          SSH_AUTH_SOCK = "$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)";
+          SSH_AUTH_SOCK = gpgconf "agent-ssh-socket";
         };
 
       programs.bash.initExtra = gpgInitStr;
@@ -167,7 +174,7 @@ in
 
     (mkIf (cfg.sshKeys != null) {
       # Trailing newlines are important
-      home.file."${config.programs.gpg.homedir}/sshcontrol".text = concatMapStrings (s: "${s}\n") cfg.sshKeys;
+      home.file."${homedir}/sshcontrol".text = concatMapStrings (s: "${s}\n") cfg.sshKeys;
     })
 
     # The systemd units below are direct translations of the
@@ -201,7 +208,7 @@ in
         };
 
         Socket = {
-          ListenStream = "%t/gnupg/S.gpg-agent";
+          ListenStream = gpgconf "agent-socket";
           FileDescriptorName = "std";
           SocketMode = "0600";
           DirectoryMode = "0700";
@@ -221,7 +228,7 @@ in
         };
 
         Socket = {
-          ListenStream = "%t/gnupg/S.gpg-agent.ssh";
+          ListenStream = gpgconf "agent-ssh-socket";
           FileDescriptorName = "ssh";
           Service = "gpg-agent.service";
           SocketMode = "0600";
@@ -242,7 +249,7 @@ in
         };
 
         Socket = {
-          ListenStream = "%t/gnupg/S.gpg-agent.extra";
+          ListenStream = gpgconf "agent-extra-socket";
           FileDescriptorName = "extra";
           Service = "gpg-agent.service";
           SocketMode = "0600";
