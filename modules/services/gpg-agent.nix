@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, options, lib, pkgs, ... }:
 
 with lib;
 
@@ -8,17 +8,33 @@ let
 
   homedir = config.programs.gpg.homedir;
 
-  gpgconf = dir: let
-    f = pkgs.runCommand dir { GNUPGHOME="${homedir}"; }
-      "${pkgs.gnupg}/bin/gpgconf --list-dirs ${dir} > $out";
-    in "${builtins.readFile f}";
-
   gpgInitStr = ''
     GPG_TTY="$(tty)"
     export GPG_TTY
   ''
   + optionalString cfg.enableSshSupport
       "${pkgs.gnupg}/bin/gpg-connect-agent updatestartuptty /bye > /dev/null";
+
+  # mimic `gpgconf` output for use in `systemd` unit definitions.
+  # we cannot use `gpgconf` directly because it heavily depends on system
+  # state, but we need the values at build time. original:
+  # https://github.com/gpg/gnupg/blob/c6702d77d936b3e9d91b34d8fdee9599ab94ee1b/common/homedir.c#L672-L681
+  gpgconf = dir: let
+    f = pkgs.runCommand dir {} ''
+      PATH=${pkgs.coreutils}/bin:${pkgs.xxd}/bin:$PATH
+
+      if [[ ${homedir} = ${options.programs.gpg.homedir.default} ]]
+      then
+        echo -n "%t/gnupg/${dir}" > $out
+      else
+        hash=$(echo -n ${homedir} | sha1sum -b | xxd -r -p | base32 | \
+               cut -c -24 | tr '[:upper:]' '[:lower:]' | \
+               tr abcdefghijklmnopqrstuvwxyz234567 \
+                  ybndrfg8ejkmcpqxot1uwisza345h769)
+         echo -n "%t/gnupg/d.$hash/${dir}" > $out
+      fi
+    '';
+    in "${builtins.readFile f}";
 
 in
 
@@ -165,7 +181,7 @@ in
 
       home.sessionVariables =
         optionalAttrs cfg.enableSshSupport {
-          SSH_AUTH_SOCK = gpgconf "agent-ssh-socket";
+          SSH_AUTH_SOCK = "$(${pkgs.gnupg}/bin/gpgconf --list-dirs agent-ssh-socket)";
         };
 
       programs.bash.initExtra = gpgInitStr;
@@ -208,7 +224,7 @@ in
         };
 
         Socket = {
-          ListenStream = gpgconf "agent-socket";
+          ListenStream = gpgconf "S.gpg-agent";
           FileDescriptorName = "std";
           SocketMode = "0600";
           DirectoryMode = "0700";
@@ -228,7 +244,7 @@ in
         };
 
         Socket = {
-          ListenStream = gpgconf "agent-ssh-socket";
+          ListenStream = gpgconf "S.gpg-agent.ssh";
           FileDescriptorName = "ssh";
           Service = "gpg-agent.service";
           SocketMode = "0600";
@@ -249,7 +265,7 @@ in
         };
 
         Socket = {
-          ListenStream = gpgconf "agent-extra-socket";
+          ListenStream = gpgconf "S.gpg-agent.extra";
           FileDescriptorName = "extra";
           Service = "gpg-agent.service";
           SocketMode = "0600";

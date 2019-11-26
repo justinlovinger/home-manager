@@ -32,9 +32,9 @@ in {
     };
 
     homedir = mkOption {
-      type = types.str;
+      type = types.path;
       example = literalExample "${config.xdg.dataHome}/gnupg";
-      default = ".gnupg";
+      default = "${config.home.homeDirectory}/.gnupg";
       description = "Directory to store keychains and configuration.";
     };
   };

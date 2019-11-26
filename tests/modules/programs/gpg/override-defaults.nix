@@ -13,7 +13,7 @@ with lib;
         throw-keyids = true;
       };
 
-      homedir = "bar/foopg";
+      homedir = "${config.home.homeDirectory}/bar/foopg";
     };
 
     nixpkgs.overlays = [
