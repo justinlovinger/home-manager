@@ -53,6 +53,7 @@ import nmt {
     ./modules/programs/abook
     ./modules/programs/firefox
     ./modules/programs/getmail
+    ./modules/services/gpg-agent
     ./modules/services/lieer
     ./modules/programs/rofi
     ./modules/services/polybar
