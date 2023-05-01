@@ -1,0 +1,82 @@
+### This file was generated with Nix. Don't modify this file directly.
+
+### SHELL VARIABLES ###
+export BAR="bar"
+export FOO="foo"
+export FOURTY_TWO="42"
+
+### RULES ###
+riverctl csd-filter-add app-id "foo"
+riverctl csd-filter-add app-id "bar"
+riverctl float-filter-add app-id "mpd"
+riverctl float-filter-add title "popup title with spaces"
+
+
+### MAPPINGS ###
+# Declare modes
+riverctl declare-mode locked
+riverctl declare-mode normal
+riverctl declare-mode passthrough
+
+# Keyboard mappings
+riverctl map locked None XF86AudioLowerVolume spawn 'pamixer -d 5'
+riverctl map locked None XF86AudioRaiseVolume spawn 'pamixer -i 5'
+riverctl map normal Alt E toggle-fullscreen
+riverctl map normal Alt P enter-mode passthrough
+riverctl map normal Alt Q close
+riverctl map normal Alt Return spawn foot
+riverctl map normal Alt T toggle-float
+riverctl map passthrough Alt P enter-mode normal
+
+# Pointer mappings
+riverctl map-pointer normal Alt BTN_LEFT move-view
+riverctl map-pointer normal Super BTN_LEFT move-view
+riverctl map-pointer normal Super BTN_MIDDLE toggle-float
+riverctl map-pointer normal Super BTN_RIGHT resize-view
+
+# Switch mappings
+riverctl map-switch locked lid open foo
+riverctl map-switch normal lid close foo
+riverctl map-switch normal lid open foo
+riverctl map-switch locked lid open foo
+riverctl map-switch normal lid close foo
+riverctl map-switch normal lid open foo
+
+
+
+### CONFIGURATION ###
+riverctl attach-mode bottom
+riverctl background-color 0x002b36
+riverctl border-color-focused 0x93a1a1
+riverctl border-color-unfocused 0x586e75
+riverctl border-color-urgent 0xff0000
+riverctl border-width 2
+riverctl focus-follows-cursor normal
+riverctl hide-cursor timeout 2
+riverctl hide-cursor timeout enabled
+riverctl set-cursor-warp on-output-change
+riverctl set-repeat 50 300
+riverctl xcursor-theme name 12
+
+
+### INPUTS ###
+riverctl keyboard-layout   -variant "colemak" -options "altwin:swap_alt_win,caps:escape,grp:alt_shift_toggle" "us,de"
+
+riverctl input pointer-foo-bar accel-profile flat
+riverctl input pointer-foo-bar events enabled
+riverctl input pointer-foo-bar pointer-accel -0.300000
+riverctl input pointer-foo-bar tap disabled
+
+
+### EXTRA CONFIGURATION ###
+some
+extra config
+
+
+### STARTUP PROGRAMS ###
+riverctl spawn "firefox"
+riverctl spawn "foot"
+
+### LAYOUT ###
+riverctl default-layout rivertile
+rivertile -view-padding 6 -outer-padding 8 &
